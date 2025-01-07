@@ -31,7 +31,7 @@ When a user uses the forgot password service and inputs their username or email,
 
 - Return a consistent message for both existent and non-existent accounts.
 - Ensure that responses return in a consistent amount of time to prevent an attacker enumerating which accounts exist. This could be achieved by using asynchronous calls or by making sure that the same logic is followed, instead of using a quick exit method.
-- Implement protections against automated submissions such as CAPTCHA, rate-limiting or other controls.
+- Implement protections against excessive automated submissions such as rate-limiting on a per-account basis, requiring a CAPTCHA, or other controls. Otherwise an attacker could make thousands of password reset requests per hour for a given account, flooding the user's intake system (e.g., email inbox or SMS) with useless requests.
 - Employ normal security measures, such as [SQL Injection Prevention methods](SQL_Injection_Prevention_Cheat_Sheet.md) and [Input Validation](Input_Validation_Cheat_Sheet.md).
 
 ### User Resets Password
@@ -102,16 +102,7 @@ Offline methods differ from other methods by allowing the user to reset their pa
 
 These identifiers should be stored offline and in a secure fashion (*e.g.* password managers), and the backend should properly follow the [general security practices](#general-security-practices). Some implementations are built on [hardware OTP tokens](Multifactor_Authentication_Cheat_Sheet.md#hardware-otp-tokens), [certificates](Multifactor_Authentication_Cheat_Sheet.md#certificates), or any other implementation that could be used inside of an enterprise. These are out of scope for this cheat sheet.
 
-#### Backup Codes
-
-Backup codes should be provided to the user upon registering where the user should store them offline in a secure place (such as their password manager). Some companies that implement this method are [Google](https://support.google.com/accounts/answer/1187538), [GitHub](https://help.github.com/en/github/authenticating-to-github/recovering-your-account-if-you-lose-your-2fa-credentials), and [Auth0](https://auth0.com/docs/mfa/guides/reset-user-mfa#recovery-codes).
-
-While implementing this method, the following practices should be followed:
-
-- Minimum length of 8 digits, 12 for improved security.
-- A user should have multiple recovery codes at any given time to ensure that one of them works (most services provide the user with ten backup codes).
-- A process should be implemented to allow the user to invalidate all existing recovery codes, in case they are compromised by a third party.
-- Rate limiting and other protections should be implemented to prevent an attacker from brute-forcing the backup codes.
+If account has MFA enabled, and you are looking for MFA recovery, different methods can be found in the corresponding [Multifactor Authentication cheat sheet](Multifactor_Authentication_Cheat_Sheet.md#resetting-mfa).
 
 ### Security Questions
 
@@ -119,4 +110,4 @@ Security questions should not be used as the sole mechanism for resetting passwo
 
 ## Account Lockout
 
-Accounts should not be locked out in response to a forgotten password attack, as this can be used to deny access to users with known usernames. For more details on account lockouts, see the [Authenication Cheat Sheet](Authentication_Cheat_Sheet.md).
+Accounts should not be locked out in response to a forgotten password attack, as this can be used to deny access to users with known usernames. For more details on account lockouts, see the [Authentication Cheat Sheet](Authentication_Cheat_Sheet.md).

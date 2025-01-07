@@ -39,6 +39,14 @@ Rails
 redirect_to login_path
 ```
 
+Rust actix web
+
+```rust
+  Ok(HttpResponse::Found()
+        .insert_header((header::LOCATION, "https://mysite.com/"))
+        .finish())
+```
+
 In the examples above, the URL is being explicitly declared in the code and cannot be manipulated by an attacker.
 
 ## Dangerous URL Redirects
@@ -71,6 +79,14 @@ And in Rails:
 
 ```ruby
 redirect_to params[:url]
+```
+
+Rust actix web
+
+```rust
+  Ok(HttpResponse::Found()
+        .insert_header((header::LOCATION, query_string.path.as_str()))
+        .finish())
 ```
 
 The above code is vulnerable to an attack if no validation or extra method controls are applied to verify the certainty of the URL. This vulnerability could be used as part of a phishing scam by redirecting users to a malicious site.
@@ -167,12 +183,12 @@ Safe use of redirects and forwards can be done in a number of ways:
     - Be careful that this doesn't introduce an enumeration vulnerability where a user could cycle through IDs to find all possible redirect targets
 - If user input can’t be avoided, ensure that the supplied **value** is valid, appropriate for the application, and is **authorized** for the user.
 - Sanitize input by creating a list of trusted URLs (lists of hosts or a regex).
-    - This should be based on an allow-list approach, rather than a block list.
+    - This should be based on an allow-list approach, rather than a denylist.
 - Force all redirects to first go through a page notifying users that they are going off of your site, with the destination clearly displayed, and have them click a link to confirm.
 
 ### Validating URLs
 
-Validating and sanitising user-input to determine whether the URL is safe is not a trivial task. Detailed instructions how to implement URL validation is described [in Server Side Request Forgery Prevention Cheat Sheet](Server_Side_Request_Forgery_Prevention_Cheat_Sheet.html#application-layer)
+Validating and sanitising user-input to determine whether the URL is safe is not a trivial task. Detailed instructions how to implement URL validation is described [in Server Side Request Forgery Prevention Cheat Sheet](Server_Side_Request_Forgery_Prevention_Cheat_Sheet.md#application-layer)
 
 ## References
 
