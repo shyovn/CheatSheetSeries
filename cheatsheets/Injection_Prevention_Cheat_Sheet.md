@@ -54,7 +54,7 @@ SQL Injection attacks can be divided into the following three classes:
 
 please check for any queries to the database are not done via prepared statements.
 
-If dynamic statements are being made please check if the data is sanitized before used as par of the statement.
+If dynamic statements are being made please check if the data is sanitized before used as part of the statement.
 
 Auditors should always look for uses of sp_execute, execute or exec within SQL Server stored procedures. Similar audit guidelines are necessary for similar functions for other vendors.
 
@@ -76,7 +76,7 @@ The time delay exploitation technique is very useful when the tester find a Blin
 http://www.example.com/product.php?id=10 AND IF(version() like '5%', sleep(10), 'false'))--
 ```
 
-In this example the tester if checking whether the MySql version is 5.x or not, making the server to delay the answer by 10 seconds. The tester can increase the delay time and monitor the responses. The tester also doesn't need to wait for the response. Sometimes he can set a very high value (e.g. 100) and cancel the request after some seconds.
+In this example the tester is checking whether the MySql version is 5.x or not, making the server delay the answer by 10 seconds. The tester can increase the delay time and monitor the responses. The tester also doesn't need to wait for the response. Sometimes they can set a very high value (e.g. 100) and cancel the request after some seconds.
 
 ###### Out of band Exploitation technique
 
@@ -270,8 +270,8 @@ If it is considered unavoidable the call to a system command incorporated with u
 2. **Input validation** - the values for commands and the relevant arguments should be both validated. There are different degrees of validation for the actual command and its arguments:
     - When it comes to the **commands** used, these must be validated against a list of allowed commands.
     - In regards to the **arguments** used for these commands, they should be validated using the following options:
-        - Positive or "allow list" input validation - where are the arguments allowed explicitly defined
-        - Allow-list Regular Expression - where is explicitly defined a list of good characters allowed and the maximum length of the string. Ensure that metacharacters like `& | ; $ > < \` \ !` and white-spaces are not part of the Regular Expression. For example, the following regular expression only allows lowercase letters and numbers, and does not contain metacharacters. The length is also being limited to 3-10 characters:
+        - Positive or allowlist input validation - where are the arguments allowed explicitly defined
+        - Allow-list Regular Expression - where is explicitly defined a list of good characters allowed and the maximum length of the string. Ensure that metacharacters like `& | ; $ > < \` \ !` and whitespaces are not part of the Regular Expression. For example, the following regular expression only allows lowercase letters and numbers, and does not contain metacharacters. The length is also being limited to 3-10 characters:
 
 `^[a-z0-9]{3,10}$`
 
@@ -304,7 +304,7 @@ Web applications often communicate with network daemons (like SMTP, IMAP, FTP) w
 
 ### Rule \#1 (Perform proper input validation)
 
-Perform proper input validation. Positive or "allow list" input validation with appropriate canonicalization is also recommended, but **is not a complete defense** as many applications require special characters in their input.
+Perform proper input validation. Positive or allowlist input validation with appropriate canonicalization is also recommended, but **is not a complete defense** as many applications require special characters in their input.
 
 ### Rule \#2 (Use a safe API)
 
