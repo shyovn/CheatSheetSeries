@@ -1,4 +1,4 @@
-# Ruby on Rails Cheatsheet
+# Ruby on Rails Cheat Sheet
 
 ## Introduction
 
@@ -17,7 +17,17 @@ eval("ruby code here")
 system("os command here")
 `ls -al /` # (backticks contain os command)
 exec("os command here")
-open("\| os command here")
+spawn("os command here")
+open("| os command here")
+Process.exec("os command here")
+Process.spawn("os command here")
+IO.binread("| os command here")
+IO.binwrite("| os command here", "foo")
+IO.foreach("| os command here") {}
+IO.popen("os command here")
+IO.read("| os command here")
+IO.readlines("| os command here")
+IO.write("| os command here", "foo")
 ```
 
 While the power of these commands is quite useful, extreme care should be taken when using them in a Rails based application. Usually, its just a bad idea. If need be, an allow-list of possible values should be used and any input should be validated as thoroughly as possible.
@@ -38,7 +48,7 @@ The statement is injectable because the name parameter is not escaped.
 Here is the idiom for building this kind of statement:
 
 ``` ruby
-@projects = Project.where("name like ?", "%#{params[:name]}%")
+@projects = Project.where("name like ?", "%#{ActiveRecord::Base.sanitize_sql_like(params[:name])}%")
 ```
 
 Use caution not to build SQL statements based on user controlled input. A list of more realistic and detailed examples is here: [rails-sqli.org](https://rails-sqli.org). OWASP has extensive information about [SQL Injection](https://owasp.org/www-community/attacks/SQL_Injection).
@@ -56,19 +66,11 @@ By default, protection against XSS comes as the default behavior. When string da
 
 # Wrong! Do not do this!
 <%= @product.name.html_safe %>
-
-# Wrong! Do not do this!
-<%= content_tag @product.name %>
 ```
 
-Unfortunately, any field that uses `raw`, `html_safe`, `content_tag` or similar like this will be a potential XSS target. Note that there are also widespread misunderstandings about `html_safe()`.
+Unfortunately, any field that uses `raw`, `html_safe` or similar like this will be a potential XSS target. Note that there are also widespread misunderstandings about `html_safe()`.
 
-[This writeup](https://stackoverflow.com/questions/4251284/raw-vs-html-safe-vs-h-to-unescape-html) describes the underlying SafeBuffer mechanism in detail. Other tags that change the way strings are prepared for output can introduce similar issues, including content_tag.
-
-``` ruby
-content_tag("/><script>alert('hack!');</script>") # XSS example
-# produces: </><script>alert('hack!');</script>><//><script>alert('hack!');</script>>
-```
+[This writeup](https://stackoverflow.com/questions/4251284/raw-vs-html-safe-vs-h-to-unescape-html) describes the underlying SafeBuffer mechanism in detail. Other tags that change the way strings are prepared for output can introduce similar issues.
 
 The method `html_safe` of String is somewhat confusingly named. It means that we know for sure the content of the string is safe to include in HTML without escaping. **This method itself is un-safe!**
 
@@ -96,7 +98,7 @@ link_to "Personal Website", 'javascript:alert(1);'.html_safe()
 # "<a href="javascript:alert(1);">Personal Website</a>"
 ```
 
-Using [Content Security](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) Policy is one more security measure to forbid execution for links starting with `javascript:` .
+Using [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP) is one more security measure to forbid execution for links starting with `javascript:` .
 
 [Brakeman scanner](https://github.com/presidentbeef/brakeman) helps in finding XSS problems in Rails apps.
 
@@ -173,7 +175,7 @@ And configure the required password complexity:
 
 ``` ruby
 # in config/initializers/devise.rb
-Devise.setup do \|config\|
+Devise.setup do |config|
   # zxcvbn score for devise
   config.min_password_score = 4 # complexity score here.
   ...
@@ -263,7 +265,7 @@ Example:
 
 `http://www.example.com/redirect?url=http://badhacker.com`
 
-The most basic, but restrictive protection is to use the `:only_path` option. Setting this to true will essentially strip out any host information. However, the `:only_path` option must be part of the first argument. If the first argument is not a hash table, then there is no way to pass in this option. In the absence of a custom helper or allow list, this is one approach that can work:
+The most basic, but restrictive protection is to use the `:only_path` option. Setting this to true will essentially strip out any host information. However, the `:only_path` option must be part of the first argument. If the first argument is not a hash table, then there is no way to pass in this option. In the absence of a custom helper or allowlist, this is one approach that can work:
 
 ``` ruby
 begin
@@ -287,7 +289,7 @@ host = URI.parse("#{params[:url]}").host
 validation_routine(host) if host
 def validation_routine(host)
   # Validation routine where we use  \A and \z as anchors *not* ^ and $
-  # you could also check the host value against an allow list
+  # you could also check the host value against an allowlist
 end
 ```
 
@@ -337,7 +339,7 @@ Care should be taken when using user input to determine which view to render. If
 
 ### Cross Origin Resource Sharing
 
-Occasionally, a need arises to share resources with another domain. For example, a file-upload function that sends data via an AJAX request to another domain. In these cases, the same-origin rules followed by web browsers must be bent. Modern browsers, in compliance with HTML5 standards, will allow this to occur but in order to do this; a couple precautions must be taken.
+Occasionally, a need arises to share resources with another domain. For example, a file-upload function that sends data via an AJAX request to another domain. In these cases, the same-origin rules followed by web browsers must be sent. Modern browsers, in compliance with HTML5 standards, will allow this to occur but in order to do this; a couple precautions must be taken.
 
 When using a nonstandard HTTP construct, such as an atypical Content-Type header, for example, the following applies:
 
@@ -347,7 +349,7 @@ When standard HTTP constructs are used:
 
 *The request is sent and the browser, upon receiving a response, inspects the response headers in order to determine if the response can and should be processed.*
 
-Allow list in Rails:
+Allowlist in Rails:
 
 **Gemfile:**
 
@@ -453,6 +455,8 @@ In general, it is important to have a process for updating dependencies. An exam
 ## Tools
 
 Use [brakeman](https://brakemanscanner.org/), an open source code analysis tool for Rails applications, to identify many potential issues. It will not necessarily produce comprehensive security findings, but it can find easily exposed issues. A great way to see potential issues in Rails is to review the brakeman documentation of warning types.
+
+A newer alternative is [bearer](https://github.com/Bearer/bearer), an open source code security and privacy analysis tool for both Ruby and JavaScript/TypeScript code, in order to identify a broad range of OWASP Top 10 potential issues. It provides many configuration options and can easily integrate into your CI/CD pipeline.
 
 There are emerging tools that can be used to track security issues in dependency sets, like automated scanning from [GitHub](https://github.blog/2017-11-16-introducing-security-alerts-on-github/) and [GitLab](https://docs.gitlab.com/ee/user/application_security/dependency_scanning/).
 

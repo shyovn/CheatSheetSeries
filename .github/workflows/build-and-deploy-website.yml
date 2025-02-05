@@ -8,27 +8,23 @@ on:
 jobs:
   build:
     name: Build offline website
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       CI: true
       WORKFLOW_GOOGLE_ANALYTICS_KEY: ${{ secrets.GOOGLE_ANALYTICS_KEY }}
     steps:
     - name: Setup Action
-      uses: actions/checkout@v1
+      uses: actions/checkout@v4
     - name: Setup Node
-      uses: actions/setup-node@v2.1.5
+      uses: actions/setup-node@v4
       with:
-        node-version: 12.x
+        node-version: 20.x
     - name: Setup Python
-      uses: actions/setup-python@v2.2.1
+      uses: actions/setup-python@v5
       with:
         python-version: '3.x'
     - name: Install Python dependencies
-      run: pip install requests feedgen wheel
-    - name: Install python mkdocs dependencies
-      run: pip install mkdocs mkdocs-material pymdown-extensions
-    - name: Set permission for build script
-      run: chmod +x scripts/Generate_Site_mkDocs.sh
+      run: make install-python-requirements
     - name: Run build script
       run: cd scripts && bash Generate_Site_mkDocs.sh
     - name: List generated files
@@ -38,7 +34,7 @@ jobs:
     - name: Test bundle
       run: zip -T bundle.zip
     - name: Upload bundle as artifact
-      uses: actions/upload-artifact@v2.2.2
+      uses: actions/upload-artifact@v4
       with:
         name: Bundle
         path: bundle.zip
@@ -50,23 +46,27 @@ jobs:
       CI: true
     steps:
     - name: Setup Action
-      uses: actions/checkout@v1
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # fetch all branches
     - name: Install dependencies
       run: sudo apt-get install -y unzip zip
-    - name: Swith to offline website (gh-pages) branch
+    - name: Switch to offline website (gh-pages) branch
       run: git checkout gh-pages
     - name: Remove previous version website files
       run: |
         shopt -s extglob
         rm -rdfv !("CNAME"|"robots.txt"|"_config.yml")
     - name: Download new build from artifact
-      uses: actions/download-artifact@v1
+      uses: actions/download-artifact@v4
       with:
         name: Bundle
-    - name: Replace bundle with new build
-      run: |
-        mv Bundle/bundle.zip bundle.zip
-        rm -rf Bundle 1>/dev/null 2>&1
+    - name: Display structure of downloaded files
+      run: ls -R
+#    - name: Replace bundle with new build
+#      run: |
+#        mv Bundle.zip bundle.zip
+#        rm -rf Bundle 1>/dev/null 2>&1
     - name: Test new bundle
       run: zip -T bundle.zip
     - name: Extract new bundle

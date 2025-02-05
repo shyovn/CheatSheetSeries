@@ -7,7 +7,7 @@ When looking at XSS (Cross-Site Scripting), there are three generally recognized
 - [Reflected or Stored](https://owasp.org/www-community/attacks/xss/#stored-and-reflected-xss-attacks)
 - [DOM Based XSS](https://owasp.org/www-community/attacks/DOM_Based_XSS).
 
-The [XSS Prevention Cheatsheet](Cross_Site_Scripting_Prevention_Cheat_Sheet.md) does an excellent job of addressing Reflected and Stored XSS. This cheatsheet addresses DOM (Document Object Model) based XSS and is an extension (and assumes comprehension of) the [XSS Prevention Cheatsheet](Cross_Site_Scripting_Prevention_Cheat_Sheet.md).
+The [XSS Prevention Cheatsheet](Cross_Site_Scripting_Prevention_Cheat_Sheet.md) does an excellent job of addressing Reflected and Stored XSS. This cheatsheet addresses DOM (Document Object Model) based XSS and is an extension (and assumes comprehension) of the [XSS Prevention Cheatsheet](Cross_Site_Scripting_Prevention_Cheat_Sheet.md).
 
 In order to understand DOM based XSS, one needs to see the fundamental difference between Reflected and Stored XSS when compared to DOM based XSS. The primary difference is where the attack is injected into the application.
 
@@ -17,7 +17,7 @@ All of this code originates on the server, which means it is the application own
 
 The difference between Reflected/Stored XSS is where the attack is added or injected into the application. With Reflected/Stored the attack is injected into the application during server-side processing of requests where untrusted input is dynamically added to HTML. For DOM XSS, the attack is injected into the application during runtime in the client directly.
 
-When a browser is rendering HTML and any other associated content like CSS, JavaScript, etc. it identifies various rendering contexts for the different kinds of input and follows different rules for each context. A rendering context is associated with the parsing of HTML tags and their attributes.
+When a browser is rendering HTML and any other associated content like CSS or JavaScript, it identifies various rendering contexts for the different kinds of input and follows different rules for each context. A rendering context is associated with the parsing of HTML tags and their attributes.
 
 - The HTML parser of the rendering context dictates how data is presented and laid out on the page and can be further broken down into the standard contexts of HTML, HTML attribute, URL, and CSS.
 - The JavaScript or VBScript parser of an execution context is associated with the parsing and execution of script code. Each parser has distinct and separate semantics in the way they can possibly execute script code which make creating consistent rules for mitigating vulnerabilities in various contexts difficult. The complication is compounded by the differing meanings and treatment of encoded values within each subcontext (HTML, HTML attribute, URL, and CSS) within the execution context.
@@ -68,14 +68,14 @@ To make dynamic updates to HTML in the DOM safe, we recommend:
 
 ```javascript
  var ESAPI = require('node-esapi');
- element.innerHTML = "<%=ESAPI.encoder().encodeForJS(ESAPI.encoder().encodeForHTML(untrustedData))%>";
- element.outerHTML = "<%=ESAPI.encoder().encodeForJS(ESAPI.encoder().encodeForHTML(untrustedData))%>";
+ element.innerHTML = "<%=ESAPI.encoder().encodeForJavascript(ESAPI.encoder().encodeForHTML(untrustedData))%>";
+ element.outerHTML = "<%=ESAPI.encoder().encodeForJavascript(ESAPI.encoder().encodeForHTML(untrustedData))%>";
 ```
 
 ```javascript
  var ESAPI = require('node-esapi');
- document.write("<%=ESAPI.encoder().encodeForJS(ESAPI.encoder().encodeForHTML(untrustedData))%>");
- document.writeln("<%=ESAPI.encoder().encodeForJS(ESAPI.encoder().encodeForHTML(untrustedData))%>");
+ document.write("<%=ESAPI.encoder().encodeForJavascript(ESAPI.encoder().encodeForHTML(untrustedData))%>");
+ document.writeln("<%=ESAPI.encoder().encodeForJavascript(ESAPI.encoder().encodeForHTML(untrustedData))%>");
 ```
 
 ## RULE \#2 - JavaScript Escape Before Inserting Untrusted Data into HTML Attribute Subcontext within the Execution Context
@@ -94,7 +94,7 @@ For example, the general rule is to HTML Attribute encode untrusted data (data f
  x.setAttribute("name", "company_name");
  // In the following line of code, companyName represents untrusted user input
  // The ESAPI.encoder().encodeForHTMLAttribute() is unnecessary and causes double-encoding
- x.setAttribute("value", '<%=ESAPI.encoder().encodeForJS(ESAPI.encoder().encodeForHTMLAttribute(companyName))%>');
+ x.setAttribute("value", '<%=ESAPI.encoder().encodeForJavascript(ESAPI.encoder().encodeForHTMLAttribute(companyName))%>');
  var form1 = document.forms[0];
  form1.appendChild(x);
 ```
@@ -107,7 +107,7 @@ The problem is that if companyName had the value "Johnson & Johnson". What would
  var ESAPI = require('node-esapi');
  var x = document.createElement("input");
  x.setAttribute("name", "company_name");
- x.setAttribute("value", '<%=ESAPI.encoder().encodeForJS(companyName)%>');
+ x.setAttribute("value", '<%=ESAPI.encoder().encodeForJavascript(companyName)%>');
  var form1 = document.forms[0];
  form1.appendChild(x);
 ```
@@ -220,7 +220,7 @@ HTML encoded example to highlight a fundamental difference with JavaScript encod
 <&#x61; href=...>
 ```
 
-If HTML encoding followed the same semantics as JavaScript encoding. The line above could have possibly worked to render a link. This difference makes JavaScript encoding a less viable weapon in our fight against XSS.
+If HTML encoding followed the same semantics as JavaScript encoding, the line above could have possibly worked to render a link. This difference makes JavaScript encoding a less viable weapon in our fight against XSS.
 
 ## RULE \#4 - JavaScript Escape Before Inserting Untrusted Data into the CSS Attribute Subcontext within the Execution Context
 
@@ -230,7 +230,7 @@ From my experience, calling the `expression()` function from an execution contex
 
 ```javascript
 var ESAPI = require('node-esapi');
-document.body.style.backgroundImage = "url(<%=ESAPI.encoder().encodeForJS(ESAPI.encoder().encodeForURL(companyName))%>)";
+document.body.style.backgroundImage = "url(<%=ESAPI.encoder().encodeForJavascript(ESAPI.encoder().encodeForURL(companyName))%>)";
 ```
 
 ## RULE \#5 - URL Escape then JavaScript Escape Before Inserting Untrusted Data into URL Attribute Subcontext within the Execution Context
@@ -240,7 +240,7 @@ The logic which parses URLs in both execution and rendering contexts looks to be
 ```javascript
 var ESAPI = require('node-esapi');
 var x = document.createElement("a");
-x.setAttribute("href", '<%=ESAPI.encoder().encodeForJS(ESAPI.encoder().encodeForURL(userRelativePath))%>');
+x.setAttribute("href", '<%=ESAPI.encoder().encodeForJavascript(ESAPI.encoder().encodeForURL(userRelativePath))%>');
 var y = document.createTextElement("Click Me To Test");
 x.appendChild(y);
 document.body.appendChild(x);
@@ -336,7 +336,7 @@ The example that follows illustrates using closures to avoid double JavaScript e
  setTimeout((function(param) { return function() {
           customFunction(param);
         }
- })("<%=ESAPI.encoder().encodeForJS(untrustedData)%>"), y);
+ })("<%=ESAPI.encoder().encodeForJavascript(untrustedData)%>"), y);
 ```
 
 The other alternative is using N-levels of encoding.
@@ -380,7 +380,7 @@ Here are some examples of how they are used:
 ```javascript
 //server-side encoding
 var ESAPI = require('node-esapi');
-var input = "<%=ESAPI.encoder().encodeForJS(untrustedData)%>";
+var input = "<%=ESAPI.encoder().encodeForJavascript(untrustedData)%>";
 ```
 
 ```javascript
@@ -454,6 +454,14 @@ if (untrustedData === 'location') {
 
 Run your JavaScript in a ECMAScript 5 [canopy](https://github.com/jcoglan/canopy) or sandbox to make it harder for your JavaScript API to be compromised (Gareth Heyes and John Stevens).
 
+Examples of some JavaScript sandbox / sanitizers:
+
+- [js-xss](https://github.com/leizongmin/js-xss)
+- [sanitize-html](https://github.com/apostrophecms/sanitize-html)
+- [DOMPurify](https://github.com/cure53/DOMPurify)
+- [MDN - HTML Sanitizer API](https://developer.mozilla.org/en-US/docs/Web/API/HTML_Sanitizer_API)
+- [OWASP Summit 2011 - DOM Sandboxing](https://owasp.org/www-pdf-archive/OWASPSummit2011DOMSandboxingBrowserSecurityTrack.pdf)
+
 ### GUIDELINE \#10 - Don't eval() JSON to convert it to native JavaScript objects
 
 Don't `eval()` JSON to convert it to native JavaScript objects. Instead use `JSON.toJSON()` and `JSON.parse()` (Chris Schmidt).
@@ -479,7 +487,7 @@ In the above example, untrusted data started in the rendering URL context (`href
 Because the data was introduced in JavaScript code and passed to a URL subcontext the appropriate server-side encoding would be the following:
 
 ```html
-<a href="javascript:myFunction('<%=ESAPI.encoder().encodeForJS(ESAPI.encoder().encodeForURL(untrustedData)) %>', 'test');">
+<a href="javascript:myFunction('<%=ESAPI.encoder().encodeForJavascript(ESAPI.encoder().encodeForURL(untrustedData)) %>', 'test');">
 Click Me</a>
  ...
 ```
@@ -488,7 +496,7 @@ Or if you were using ECMAScript 5 with an immutable JavaScript client-side encod
 
 ```html
 <!-- server side URL encoding has been removed.  Now only JavaScript encoding on server side. -->
-<a href="javascript:myFunction('<%=ESAPI.encoder().encodeForJS(untrustedData)%>', 'test');">Click Me</a>
+<a href="javascript:myFunction('<%=ESAPI.encoder().encodeForJavascript(untrustedData)%>', 'test');">Click Me</a>
  ...
 <script>
 Function myFunction (url,name) {
@@ -508,11 +516,11 @@ There are a number of open source encoding libraries out there:
 4. [Jtidy](http://jtidy.sourceforge.net/)
 5. Your company's custom implementation.
 
-Some work on a block list while others ignore important characters like "&lt;" and "&gt;".
+Some work on a denylist while others ignore important characters like "&lt;" and "&gt;".
 
 Java Encoder is an active project providing supports for HTML, CSS and JavaScript encoding.
 
-ESAPI is one of the few which works on an allow list and encodes all non-alphanumeric characters. It is important to use an encoding library that understands which characters can be used to exploit vulnerabilities in their respective contexts. Misconceptions abound related to the proper encoding that is required.
+ESAPI is one of the few which works on an allowlist and encodes all non-alphanumeric characters. It is important to use an encoding library that understands which characters can be used to exploit vulnerabilities in their respective contexts. Misconceptions abound related to the proper encoding that is required.
 
 ### Encoding Misconceptions
 
